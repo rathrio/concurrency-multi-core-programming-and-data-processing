@@ -85,7 +85,7 @@ public class Ex1Case1 {
 
 
     public static void main(String[] args) {
-        if (args.length != 2) {
+        if (args.length < 2) {
             System.out.println("Usage: java Ex1Case1 <NUM_THREADS> <COUNTER_LIMIT>");
             return;
         }
