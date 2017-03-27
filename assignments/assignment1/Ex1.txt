@@ -1,0 +1,32 @@
+Report
+======
+
+Class            | Threads          | Runtime ms       | Speedup         
+-------------------------------------------------------------------------
+Ex1NoSync        | 1                | 3.046           
+Ex1Sync          | 1                | 3.411            | 0.893           
+Ex1ReentrantLock | 1                | 3.353            | 0.908           
+Ex1NoSync        | 2                | 7.397           
+Ex1Sync          | 2                | 4.327            | 1.709           
+Ex1ReentrantLock | 2                | 4.182            | 1.769           
+Ex1NoSync        | 4                | 14.035          
+Ex1Sync          | 4                | 5.063            | 2.772           
+Ex1ReentrantLock | 4                | 5.249            | 2.674           
+Ex1NoSync        | 8                | 22.678          
+Ex1Sync          | 8                | 7.802            | 2.907           
+Ex1ReentrantLock | 8                | 7.306            | 3.104           
+
+
+Specs
+=====
+
+OS: macOS Sierra 10.12.3
+Model Name: MacBook Pro
+Model Identifier: MacBookPro11,1
+Processor Name: Intel Core i7
+Processor Speed:  3 GHz
+Number of Processors: 1
+Total Number of Cores:  2
+L2 Cache (per Core):  256 KB
+L3 Cache: 4 MB
+Memory: 16 GB
