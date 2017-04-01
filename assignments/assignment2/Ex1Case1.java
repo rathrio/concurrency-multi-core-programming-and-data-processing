@@ -16,7 +16,6 @@ public class Ex1Case1 {
         private AtomicIntegerArray level;
         private AtomicIntegerArray victim;
 
-
         public PetersonLock(int n) {
             this.n = n;
             this.level = new AtomicIntegerArray(n);
@@ -24,21 +23,13 @@ public class Ex1Case1 {
         }
 
         public void lock(int id) {
-            ArrayList<Integer> otherThreadIds = new ArrayList<Integer>();
-
-            for (int i = 0; i < n; i++) {
-                if (i == id) {
-                    continue;
-                }
-
-                otherThreadIds.add(i);
-            }
+            ArrayList<Integer> otherThreadIds = threadIdsExcept(id);
 
             for (int l = 1; l < n; l++) {
                 level.set(id, l);
                 victim.set(l, id);
 
-                while (anotherThreadWaiting(otherThreadIds, l) && victim.get(l) == id) {
+                while (victim.get(l) == id && anotherThreadWaiting(otherThreadIds, l)) {
                     // busy wait
                 }
             }
@@ -59,6 +50,20 @@ public class Ex1Case1 {
             }
 
             return otherWaiting;
+        }
+
+        private ArrayList<Integer> threadIdsExcept(int id) {
+            ArrayList<Integer> otherThreadIds = new ArrayList<Integer>();
+
+            for (int i = 0; i < n; i++) {
+                if (i == id) {
+                    continue;
+                }
+
+                otherThreadIds.add(i);
+            }
+
+            return otherThreadIds;
         }
     }
 
