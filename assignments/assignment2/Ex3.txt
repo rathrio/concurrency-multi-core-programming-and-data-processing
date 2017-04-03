@@ -1,0 +1,35 @@
+Figure 1
+--------
+
+                    r.read(1)
+A ------------------|-*-----|--------------------------------------------------
+
+                r.write(1)            r.read(2)
+B --------------|-*------------|------|-*------|-------------------------------
+
+                      r.write(2)
+C --------------------|----*--|------------------------------------------------
+
+
+History is linearizable. We can find points (marked with "*") in the execution
+so that the timeline is correct. Thus, it is also sequentally consistent.
+
+
+
+Figure 2
+--------
+
+                    r.write(2)
+A ------------------|----------|-----------------------------------------------
+
+
+    r.write(1)               r.read(2)          r.read(1)
+B --|-----------------|------|----------|-------|------------|-----------------
+
+
+History is NOT linearizable. We cannot find a sequence where B can read 1 in
+the end, because for it to have read 2 before, A must have written 2 (and not
+1).
+
+History is NOT sequentally consistent. There's no way we can interleave the
+events of A and B, so that B can read a 1 in the end.
