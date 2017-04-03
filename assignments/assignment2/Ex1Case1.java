@@ -98,7 +98,7 @@ public class Ex1Case1 {
         }
     }
 
-    // This function permits to use only one processor on Solaris OS (Sun Fire T2000):
+    // This function permits to use only one processor on Solaris OS (Sun Fire T2000)
     public static void setSolarisAffinity() {
         try {
             // retrieve process id
@@ -117,7 +117,7 @@ public class Ex1Case1 {
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.out.println("Usage: java Ex1Case1 <NUM_THREADS> <COUNTER_LIMIT> [<USE_SINGLE_CORE>]");
+            System.out.println("Usage: java Ex1Case1 <NUM_THREADS> <COUNTER_LIMIT> [<USE_SINGLE_PROCESSOR>]");
             return;
         }
 

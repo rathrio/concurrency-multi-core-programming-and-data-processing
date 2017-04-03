@@ -1,0 +1,31 @@
+Single-Processor Sunfire
+========================
+
++------+---------+-----------------+----------------+---------+--------------+
+| Case | Counter |   Lowest access | Highest access | Threads | Runtime (ms) |
++------+---------+-----------------+----------------+---------+--------------+
+|    1 |  300000 |           74869 |          75104 |       4 |       585.27 |
+|    2 |  300000 |           74739 |          75182 |       4 |       563.51 |
+|    1 |  300000 |           37384 |          37625 |       8 |       938.84 |
+|    2 |  300000 |           37435 |          37560 |       8 |       913.75 |
++------+---------+-----------------+----------------+---------+--------------+
+
+Multi-Processor Sunfire
+=======================
+
++------+---------+-----------------+----------------+---------+--------------+
+| Case | Counter |   Lowest access | Highest access | Threads | Runtime (ms) |
++------+---------+-----------------+----------------+---------+--------------+
+|    1 |  300000 |           74659 |          74853 |       4 |       562.63 |
+|    2 |  300000 |           74461 |          75269 |       4 |       533.78 |
+|    1 |  300000 |           37300 |          37554 |       8 |       806.26 |
+|    2 |  300000 |           37459 |          37567 |       8 |      1000.22 |
++------+---------+-----------------+----------------+---------+--------------+
+
+Case 2 is generally more performant, since we're not dealing with any
+(obsolete) memory barriers introduced by the volatile keyword.
+
+On multiple processors with a high number of threads we experience the opposite
+phenomenon. I assume that we're dealing with a lot of contention while
+busy-waiting here, so that the benefits of the non-volatile variable is
+outweighed.
