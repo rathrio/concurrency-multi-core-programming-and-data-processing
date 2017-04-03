@@ -98,36 +98,70 @@ public class Ex1Case1 {
         }
     }
 
+    // This function permits to use only one processor on Solaris OS (Sun Fire T2000):
+    public static void setSolarisAffinity() {
+        try {
+            // retrieve process id
+            String pid_name = java.lang.management.ManagementFactory.getRuntimeMXBean().getName();
+            String [] pid_array = pid_name.split("@");
+            int pid = Integer.parseInt( pid_array[0] );
+            // random processor
+            int processor = new java.util.Random().nextInt( 32 );
+            // Set process affinity to one processor (on Solaris)
+            Process p = Runtime.getRuntime().exec("/usr/sbin/pbind -b ");
+            p.waitFor();  }
+        catch (Exception err) {
+            err.printStackTrace();
+        }
+    }
 
     public static void main(String[] args) {
         if (args.length < 2) {
-            System.out.println("Usage: java Ex1Case1 <NUM_THREADS> <COUNTER_LIMIT>");
+            System.out.println("Usage: java Ex1Case1 <NUM_THREADS> <COUNTER_LIMIT> [<USE_SINGLE_CORE>]");
             return;
         }
 
         NUM_THREADS = Integer.parseInt(args[0]);
         COUNTER_LIMIT = Integer.parseInt(args[1]);
 
+        if (args.length > 2 && Integer.parseInt(args[2]) == 1) {
+            setSolarisAffinity();
+        }
+
         threads = new IncrementerThread[NUM_THREADS];
         accesses = new int[NUM_THREADS];
 
         lock = new PetersonLock(NUM_THREADS);
 
+        // Initialize NUM_THREADS threads
         for (int i = 0; i < NUM_THREADS; i++) {
             IncrementerThread t = new IncrementerThread(i);
             threads[i] = t;
-            t.start();
         }
 
-        for (int i = 0; i < NUM_THREADS; i++) {
-            IncrementerThread t = threads[i];
+        // Start threads, wait for them to finish and print the time
+        // it took to increment the counter.
+        try {
+            long startTime = System.nanoTime();
 
-            try {
-                t.join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+            for (int i = 0; i < NUM_THREADS; i++) {
+                threads[i].start();
             }
 
+            for (int i = 0; i < NUM_THREADS; i++) {
+                threads[i].join();
+            }
+
+            long runTime = System.nanoTime() - startTime;
+            double runTimeMs = runTime / 1000000.0;
+            System.out.println("Runtime: " + runTimeMs + "ms");
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+
+        // Print number of accesses per thread
+        for (int i = 0; i < NUM_THREADS; i++) {
             System.out.println("Thread " + i + ": " + accesses[i]);
         }
 
