@@ -1,8 +1,8 @@
 import java.util.ArrayList;
 import java.util.concurrent.atomic.AtomicIntegerArray;
 
-public class Ex1Case1 {
-    private static volatile int sharedCounter = 0;
+public class Ex1Case2 {
+    private static int sharedCounter = 0;
     private static IncrementerThread[] threads;
     private static int[] accesses;
 
@@ -26,28 +26,19 @@ public class Ex1Case1 {
             ArrayList<Integer> otherThreadIds = threadIdsExcept(id);
 
             for (int l = 1; l < n; l++) {
-                // I'm interested and waiting in room l
                 level.set(id, l);
-
-                // Let me be the victim
                 victim.set(l, id);
 
-                // While I'm the victim in room l and other guys are waiting in this
-                // or "higher" rooms...
-                while (anotherThreadWaiting(otherThreadIds, l) && victim.get(l) == id) {
-                    // ...busy wait.
+                while (victim.get(l) == id && anotherThreadWaiting(otherThreadIds, l)) {
+                    // busy wait
                 }
-                // As soon as someone else offers to be the victim, I can proceed.
-                // That's also the case when nobody else is waiting with or above me.
             }
         }
 
-        // I'm no longer in any room.
         public void unlock(int id) {
             level.set(id, 0);
         }
 
-        // i.e. another thread is on the same or higher level.
         private boolean anotherThreadWaiting(ArrayList<Integer> threadIds, int currentLevel) {
             boolean otherWaiting = false;
 
@@ -61,7 +52,6 @@ public class Ex1Case1 {
             return otherWaiting;
         }
 
-        // Helper to determine IDs of other threads.
         private ArrayList<Integer> threadIdsExcept(int id) {
             ArrayList<Integer> otherThreadIds = new ArrayList<Integer>();
 

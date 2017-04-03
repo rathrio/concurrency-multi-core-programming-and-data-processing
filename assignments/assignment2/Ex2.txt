@@ -1,0 +1,47 @@
+Why is the generalized Peterson algorithm unfair?
+-------------------------------------------------
+
+The first one to acquire the lock doesn't have to be the first one to enter the
+critical section.
+
+Example:
+
+Thread       1               2               3
+--------------------------------------------------------
+Level        1               1               1             <-- Assume Thread1 was the first to arrive
+             level[1]=1      
+                             level[2]=1      
+                                             level[3]=1
+
+
+                                             victim[1]=3   <-- But other threads are quicker to mark
+                                                               themselves as victims
+
+
+                             victim[1]=2                   <-- Thread3 continues to next level
+
+
+             victim[1]=1                                   <-- Thread2 continues to next level. Thread1
+                                                               is now the remaining victim in level 1 and
+                                                               since all other threads are in a higher level,
+                                                               it has to wait until they have passed all levels.
+
+
+
+How can the algorithm be enhanced to provide fairness?
+------------------------------------------------------
+
+Bounded waiting: Introduce a fixed number of times a thread can be overtaken.
+
+As described in the slides, you could divide the lock method up into two parts:
+
+  Part 1: Showing interest (setting level)
+  Part 2: Waiting (setting victim and busy waiting)
+
+Keep track of how many times another thread entered a critical section after
+one thread showed interest in Part 1, and make sure that number is fixed. For
+instance, if we define that we only allow this once, the thread showing
+interest for the first time can only be overtaken once.
+
+Maybe you could make setting the level and victim flags an atomic operation.
+Might result in FIFO behaviour.
