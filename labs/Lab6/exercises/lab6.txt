@@ -1,0 +1,75 @@
+1.a)
+
+History is not linearizable. For C to read 2, A has to write 2 beforehand, thus
+C will never be able to read 1 afterwords.
+
+It is sequentally consistent, though. We can interleave the events as
+following:
+
+     r.write(1)   r.write(2)               r.write(1)
+A: -[--*------]--[-------*-------]--------[--*----------]----------------------
+
+           r.read():1
+B: -------[---*------]---------------------------------------------------------
+
+                             r.read():2      r.read():1
+C: -------------------------[-----*------]--[-------*-----]--------------------
+
+
+
+1.b)
+
+History is linearizable, thus also sequentally consistent.
+
+We can choose the events as following:
+
+      r.write(1)   r.write(2)   r.write(1)
+A: --[--*------]--[--*------]--[--------*-]------------------------------------
+
+           r.read():1
+B: -------[--*----------------------]------------------------------------------
+
+                                       r.read():2
+C: ----------------------------------[-*---------]-----------------------------
+
+
+
+2.a)
+
+History is linearizable, thus also sequentally consistent.
+
+
+         s.push(10)                     s.push(20)
+A: -----[--*-------------]-------------[----------------*--]-------------------
+
+                    s.pop():10
+B: ----------------[----*--------------------]---------------------------------
+
+     s.empty():true
+C: -[---------------------------------------------*--------------------------]-
+
+
+
+2.b)
+
+History is NOT linearizable. There is no way for B.empty() to return true after
+an uneven number of push/pop 10s.
+
+History is sequentally consistent. We can move B.empty() to the end of the
+sequence so that the pairs of pushed and pop 10s happen before it.
+
+     s.push(10)   s.pop():10   s.pop():10
+A: -[---------]--[---------]--[---------]--------------------------------------
+
+         s.push(10)                         s.empty():true
+B: -----[---------]------------------------[---------]-------------------------
+
+
+
+3)
+
+History is NOT linearizable. x is enqueued first, so A should dequeue x, but it
+dequeues y.
+
+History is NOT sequentally consistent, because there is no way to interleave
+the traces, so that y is dequeued twice.

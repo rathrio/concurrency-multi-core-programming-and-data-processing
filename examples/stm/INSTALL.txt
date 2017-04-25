@@ -1,0 +1,10 @@
+wget http://tmware.org/sites/tmware.org/files/tinySTM/tinySTM-1.0.3.tgz
+tar xzf tinySTM-1.0.3.tgz
+ln -s tinySTM-1.0.3 tinySTM
+cd tinySTM
+vi Makefile
+sed -i 's/-UINTERNAL_STATS/-DINTERNAL_STATS/g' Makefile
+make test
+cd ..
+
+./tinySTM/test/intset/intset-sl -n 8 | grep '^#' | head -4

@@ -1,0 +1,41 @@
+### Setup
+
+# K-means: generate cluster file ("cluster.dat")
+java mapreduce.ClusterGen 6 1024 cluster.dat
+
+
+### MapReduce
+
+# K-means
+java mapreduce.KMeans cluster.dat 6 8
+
+# SSSP (single-source shortest path)
+java mapreduce.SSSP 4096
+
+# Point (barycenter)
+java mapreduce.Point 22
+
+# WordCount
+java mapreduce.WordCount tolstoy.txt 4 | awk '{print $2,$1}' | sort -nr | head -10
+java mapreduce.WordCount wilde.txt 4 | awk '{print $2,$1}' | sort -nr | head -10
+java mapreduce.WordCount tolstoy.txt 1 time
+java mapreduce.WordCount tolstoy.txt 2 time
+java mapreduce.WordCount tolstoy.txt 4 time
+java mapreduce.WordCount tolstoy.txt 8 time
+for i in 1 2 4 8 16 32; do java mapreduce.WordCount tolstoy.txt $i time; done
+
+
+### Streams
+
+# K-means
+java streams.KMeans cluster.dat 6
+
+# Parallel stream (out-of-order output)
+java streams.Parallel
+
+# Tests
+java streams.Parallel
+
+# WordCount
+java streams.WordCount tolstoy.txt
+java streams.WordCount wilde.txt

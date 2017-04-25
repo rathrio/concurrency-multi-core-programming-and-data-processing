@@ -1,0 +1,14 @@
+gcc -O3 -o vol-O3 vol.c
+gcc -O0 -o vol-O0 vol.c
+gcc -O3 -o reg-O3 reg.c
+gcc -O0 -o reg-O0 reg.c
+
+# OSX
+otool -tvV reg
+otool -tvV vol
+
+# Linux
+objdump -d reg
+objdump -d vol
+
+echo "obase=16; 4999999950000000" | bc
