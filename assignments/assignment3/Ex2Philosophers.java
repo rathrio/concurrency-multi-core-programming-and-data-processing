@@ -95,6 +95,6 @@ public class Ex2Philosophers {
             new PhilosopherThread(i, table).start();
         }
 
-        // The dine forever. Program must be cancelled with CTRL-C.
+        // They dine forever. Program must be cancelled with CTRL-C.
     }
 }

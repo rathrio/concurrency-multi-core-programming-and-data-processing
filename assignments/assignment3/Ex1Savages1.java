@@ -45,8 +45,9 @@ public class Ex1Savages1 {
                 }
 
                 PORTIONS += 1;
-                potEmpty = false;
                 System.out.println("Cook refilled portions to " + PORTIONS);
+
+                potEmpty = false;
             }
         }
     }
@@ -57,8 +58,28 @@ public class Ex1Savages1 {
         CookThread cook = new CookThread();
         cook.start();
 
+        SavageThread[] savages = new SavageThread[PORTIONS + 3];
+
         for (int i = 0; i < PORTIONS + 3; i++) {
-            new SavageThread().start();
+            savages[i] = new SavageThread(i);
+        }
+
+        for (int i = 0; i < PORTIONS + 3; i++) {
+            savages[i].start();
+        }
+
+        for (int i = 0; i < PORTIONS + 3; i++) {
+            try {
+                savages[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        try {
+            cook.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 }
