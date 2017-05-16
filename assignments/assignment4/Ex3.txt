@@ -1,0 +1,29 @@
+Does this algorithm always preserve FIFO order in the sense that for example if
+the enqueue for an element by a thread A starts before another enqueue element
+for a thread B, a following dequeue started by a thread C will always return
+the element enqueued by thread A?
+
+No, it does not. While elements are inserted in the order in which
+tail.getAndIncrement() in enq() is called, deq() might "skip" elements. Let's
+illustrate this in the following timeline:
+
+Tail is at 0.
+
+  1. A calls enq()
+      - A runs "int i = tail.getAndIncrement();". Tail is at 1.
+
+Assume A is being suuuper slow and...
+
+  2. B calls enq()
+      - B runs "int i = tail.getAndIncrement();". Tails is at 2.
+      - B runs "items[1].set(x);" and thereby inserts an element at position 1.
+
+  3. C calls deq()
+      - C iterates through position 0 to 1 and will return the first non-null
+        value, which is the element at position 1 inserted by B.
+
+A on the move...
+
+  4. A gets to inserting the element at 0.
+
+So A was the first to call enq(), but C dequeued the element inserted by B.

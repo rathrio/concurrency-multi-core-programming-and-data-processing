@@ -1,0 +1,57 @@
+Case 1: volatile counter
+Case 2: non volatile counter
+
+These are the stats from running the counter code with all three locks on
+Sunfire.
+
+Peterson
+========
+
++------+---------+-----------------+----------------+---------+--------------+
+| Case | Counter |   Lowest access | Highest access | Threads | Runtime (ms) |
++------+---------+-----------------+----------------+---------+--------------+
+|    1 |  300000 |           74659 |          74853 |       4 |       562.63 |
+|    2 |  300000 |           74461 |          75269 |       4 |       533.78 |
+|    1 |  300000 |           37300 |          37554 |       8 |       806.26 |
+|    2 |  300000 |           37459 |          37567 |       8 |      1000.22 |
++------+---------+-----------------+----------------+---------+--------------+
+
+
+CAS
+===
+
++------+---------+---------------+----------------+---------+--------------+
+| Case | Counter | Lowest access | Highest access | Threads | Runtime (ms) |
++------+---------+---------------+----------------+---------+--------------+
+|    1 |  300000 |         49863 |          98577 |       4 |       165.91 |
+|    2 |  300000 |         65725 |          82991 |       4 |       159.51 |
+|    1 |  300000 |         12687 |          71158 |       8 |       195.49 |
+|    2 |  300000 |         30700 |          46204 |       8 |       202.84 |
++------+---------+---------------+----------------+---------+--------------+
+
+
+CCAS
+====
+
++------+---------+---------------+----------------+---------+--------------+
+| Case | Counter | Lowest access | Highest access | Threads | Runtime (ms) |
++------+---------+---------------+----------------+---------+--------------+
+|    1 |  300000 |         69278 |          79750 |       4 |       180.60 |
+|    2 |  300000 |         18851 |         131221 |       4 |       167.15 |
+|    1 |  300000 |         12811 |          80919 |       8 |       192.52 |
+|    2 |  300000 |         29973 |          47130 |       8 |       204.41 |
++------+---------+---------------+----------------+---------+--------------+
+
+
+Observations
+============
+
+- CAS and CCAS much more performant than Peterson, but
+- even the unfair version of Peterson is fairer than both CAS and CCAS.
+- The performance penalty from upping to 8 threads seems to reduced with
+  CCAS, thanks to spinning on local cache I assume.
+- The benefits of a non volatile variable (no membar/lock instructions)
+  still don't outweigh performance loss with 8 threads (contention).
+
+
+

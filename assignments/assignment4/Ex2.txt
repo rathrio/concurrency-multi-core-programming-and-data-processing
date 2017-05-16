@@ -1,0 +1,10 @@
+Is it necessary to protect the check for a non-empty queue in the deq() method
+with a lock or the check can be done outside the locked part?
+
+Yes, it is necessary.
+
+Assume there is one element in the queue and we perform the check before
+acquiring the lock. Now two or more threads might simultaneously perform that
+check and all of them will assume that head is not null. The first one to
+acquire the lock will dequeue the one element, the next one will attempt to
+dequeue an empty queue, resulting in an unhandled exception.

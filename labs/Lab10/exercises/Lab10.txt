@@ -1,0 +1,47 @@
+1.Explain how the complex barrier functions. Give an example trace on at least
+three threads.
+
+Threads wait for each other at two barriers (doors), once in Part I, and again
+in Part II. Let's illustrate how it works in the following example trace:
+
+Initial values:
+pt := 0 (passed threads)
+endoor := false (entrance door)
+exdoor := true (exit door)
+N := 3 (amount of threads)
+
+
+Thread         A                 B                 C 
+----------------------------------------------------------
+
+Part I         pt=1                                         <-- A is first to acquire lock and decrements pt.
+                                                                Will busy wait since entrance door is still closed
+
+                                 pt=2                       <-- B is second. Will also busy wait.
+
+                                                   pt=3     <-- C is last. pt is now = N. Enters if condition.
+                                                                Will open entrance door, allow all waiting threads to continue.
+
+Part II                          pt=2                       <-- B is first to acquire lock in Part II. Decrements pt and busywaits.
+
+               pt=1                                             A is second. Will also busywait since the exit door is still closed (exdoor = false)
+
+                                                   pt=0     <-- C is last to acquire lock in Part II.
+                                                                Enters if condition and opens exit door and closes entrance door.
+                                                                All waiting threads may continue.
+
+
+
+2. Why are the two consecutive parts needed? Would only Part I be enough to
+enforce the requirements?
+
+To ensure fairness. It's a similar issue as on slide 18 in the barriers
+lecture. If the last one is too slow, the others will in any case be forced to
+wait for it in the second barrier.
+
+Part I alone cannot be reused, since Part II closes the entrance door.
+
+
+
+
+
