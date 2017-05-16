@@ -14,7 +14,7 @@ public class Ex1 {
     // If a pixel has >= D live neighbors, it will not be turned off.
     private static int D;
 
-    private static int ALIVENESS_THRESHOLD = 0;
+    private static int ALIVENESS_THRESHOLD;
 
     // Loads pgm image to the 2D int array pixels in this class.
     private static void loadImage(String path) {
@@ -84,7 +84,9 @@ public class Ex1 {
 
         int[][] tmpPixels = null;
 
-        while (tmpPixels != PIXELS) {
+//        while (tmpPixels != PIXELS) {
+
+        for (int i = 0; i < 30; i++) {
             tmpPixels = PIXELS.clone();
 
             for (int y = 0; y < HEIGHT; y++) {
@@ -106,6 +108,8 @@ public class Ex1 {
 
             PIXELS = tmpPixels;
         }
+
+//        }
 
         long runTime = System.nanoTime() - startTime;
         double runTimeMs = runTime / 1000000.0;
@@ -187,14 +191,15 @@ public class Ex1 {
     }
 
     public static void main(String[] args) {
-        if (args.length < 1) {
-            System.out.println("Usage: java Ex1 <D>");
+        if (args.length < 2) {
+            System.out.println("Usage: java Ex1 <D> <ALIVENESS_THRESHOLD>");
             return;
         }
 
         D = Integer.parseInt(args[0]);
+        ALIVENESS_THRESHOLD = Integer.parseInt(args[1]);
 
-        loadImage("images/lena.pgm");
+        loadImage("images/hasselhoff.pgm");
         sequentialSmoothEdges();
         writeImage("out.pgm");
     }
