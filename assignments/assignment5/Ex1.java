@@ -91,10 +91,8 @@ public class Ex1 {
 
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
-                    int value = PIXELS[x][y];
-
                     // Skip dead pixels.
-                    if (value <= ALIVENESS_THRESHOLD) {
+                    if (PIXELS[x][y] <= ALIVENESS_THRESHOLD) {
                         continue;
                     }
 
@@ -191,15 +189,16 @@ public class Ex1 {
     }
 
     public static void main(String[] args) {
-        if (args.length < 2) {
-            System.out.println("Usage: java Ex1 <D> <ALIVENESS_THRESHOLD>");
+        if (args.length < 3) {
+            System.out.println("Usage: java Ex1 <D> <ALIVENESS_THRESHOLD> <IMAGE>");
             return;
         }
 
         D = Integer.parseInt(args[0]);
         ALIVENESS_THRESHOLD = Integer.parseInt(args[1]);
+        String path = args[2];
 
-        loadImage("images/hasselhoff.pgm");
+        loadImage(path);
         sequentialSmoothEdges();
         writeImage("out.pgm");
     }
