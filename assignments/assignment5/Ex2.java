@@ -77,6 +77,8 @@ public class Ex2 {
     }
 
     private static void sequentialBlurImage() {
+        long startTime = System.nanoTime();
+
         int[][] tmpPixels = new int[WIDTH][HEIGHT];
 
         for (int y = 1; y < (HEIGHT - 1); y++) {
@@ -86,6 +88,10 @@ public class Ex2 {
             }
         }
         PIXELS = tmpPixels;
+
+        long runTime = System.nanoTime() - startTime;
+        double runTimeMs = runTime / 1000000.0;
+        System.out.println("Runtime: " + runTimeMs + "ms");
     }
 
     private static int applyKernel(double[][] neighborhood) {
@@ -109,18 +115,39 @@ public class Ex2 {
     }
 
     public static void main(String[] args) {
-        if (args.length < 1) {
-            System.out.println("Usage: java Ex1 <IMAGE>");
+        if (args.length < 2) {
+            System.out.println("Usage: java Ex1 <IMAGE> <EFFECT>");
             return;
         }
 
         String path = args[0];
+        String effect = args[1];
 
-        // BLUR
-        KERNEL[0] = new double[]{0.0625, 0.125, 0.0625};
-        KERNEL[1] = new double[]{0.0125, 0.25, 0.125};
-        KERNEL[2] = new double[]{0.0625, 0.125, 0.0625};
-
+        switch (effect.toLowerCase()) {
+            case "blur":
+                KERNEL[0] = new double[]{0.0625, 0.125, 0.0625};
+                KERNEL[1] = new double[]{0.0125, 0.25, 0.125};
+                KERNEL[2] = new double[]{0.0625, 0.125, 0.0625};
+                break;
+            case "sharpen":
+                KERNEL[0] = new double[]{0, -1, 0};
+                KERNEL[1] = new double[]{-1, 5, -1};
+                KERNEL[2] = new double[]{0, -1, 0};
+                break;
+            case "outline":
+                KERNEL[0] = new double[]{-1, -1, -1};
+                KERNEL[1] = new double[]{-1, 8, -1};
+                KERNEL[2] = new double[]{-1, -1, -1};
+                break;
+            case "emboss":
+                KERNEL[0] = new double[]{-2, -1, 0};
+                KERNEL[1] = new double[]{-1, 1, 1};
+                KERNEL[2] = new double[]{0, 1, 2};
+                break;
+            default:
+                System.out.printf("Unknown effect \"%s\". Use blur, sharpen, outline or emboss.%n", effect);
+                System.exit(1);
+        }
 
         loadImage(path);
         sequentialBlurImage();
