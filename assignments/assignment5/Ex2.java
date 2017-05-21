@@ -117,13 +117,22 @@ public class Ex2 {
         mat[0] = new double[]{PIXELS[x - 1][y - 1], PIXELS[x - 1][y], PIXELS[x - 1][y + 1]};
         mat[1] = new double[]{PIXELS[x][y - 1], PIXELS[x][y], PIXELS[x][y + 1]};
         mat[2] = new double[]{PIXELS[x + 1][y - 1], PIXELS[x + 1][y], PIXELS[x + 1][y + 1]};
+
+//        for (int j = 0; j < 3; j++) {
+//            for (int i = 0; i < 3; i++) {
+//                System.out.print(PIXELS[j][i] + " ");
+//            }
+//            System.out.println();
+//        }
+//        System.out.println();
+
         return mat;
     }
 
     public static void main(String[] args) {
         if (args.length < 2) {
             System.out.println("Usage: java Ex1 <IMAGE> <EFFECT>");
-            return;
+            System.exit(1);
         }
 
         String path = args[0];
@@ -132,7 +141,7 @@ public class Ex2 {
         switch (effect.toLowerCase()) {
             case "blur":
                 KERNEL[0] = new double[]{0.0625, 0.125, 0.0625};
-                KERNEL[1] = new double[]{0.0125, 0.25, 0.125};
+                KERNEL[1] = new double[]{0.125, 0.25, 0.125};
                 KERNEL[2] = new double[]{0.0625, 0.125, 0.0625};
                 break;
             case "sharpen":
