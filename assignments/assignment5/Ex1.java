@@ -4,6 +4,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Ex1 {
@@ -83,14 +84,16 @@ public class Ex1 {
         long startTime = System.nanoTime();
 
         int[][] tmpPixels = null;
+        boolean changes = true;
 
-//        while (tmpPixels != PIXELS) {
-
-        for (int i = 0; i < 30; i++) {
-            tmpPixels = PIXELS.clone();
+        while(changes) {
+            System.out.println("ITERATING");
+            tmpPixels = new int[WIDTH][HEIGHT];
 
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 0; x < WIDTH; x++) {
+                    tmpPixels[x][y] = PIXELS[x][y];
+
                     // Skip dead pixels.
                     if (PIXELS[x][y] <= ALIVENESS_THRESHOLD) {
                         continue;
@@ -104,10 +107,12 @@ public class Ex1 {
                 }
             }
 
+            if (Arrays.deepEquals(PIXELS, tmpPixels)) {
+                changes = false;
+            }
+
             PIXELS = tmpPixels;
         }
-
-//        }
 
         long runTime = System.nanoTime() - startTime;
         double runTimeMs = runTime / 1000000.0;
@@ -190,13 +195,13 @@ public class Ex1 {
 
     public static void main(String[] args) {
         if (args.length < 3) {
-            System.out.println("Usage: java Ex1 <D> <ALIVENESS_THRESHOLD> <IMAGE>");
+            System.out.println("Usage: java Ex1 <IMAGE> <D> <ALIVENESS_THRESHOLD>");
             return;
         }
 
-        D = Integer.parseInt(args[0]);
-        ALIVENESS_THRESHOLD = Integer.parseInt(args[1]);
-        String path = args[2];
+        String path = args[0];
+        D = Integer.parseInt(args[1]);
+        ALIVENESS_THRESHOLD = Integer.parseInt(args[2]);
 
         loadImage(path);
         sequentialSmoothEdges();

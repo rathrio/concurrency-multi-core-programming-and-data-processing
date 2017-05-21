@@ -13,6 +13,8 @@ public class Ex2 {
 
     private static double[][] KERNEL = new double[3][3];
 
+    private static int NUM_THREADS;
+
     // Loads pgm image to the 2D int array pixels in this class.
     private static void loadImage(String path) {
         try {
@@ -76,7 +78,7 @@ public class Ex2 {
         }
     }
 
-    private static void sequentialBlurImage() {
+    private static void sequentialApplyEffect() {
         long startTime = System.nanoTime();
 
         int[][] tmpPixels = new int[WIDTH][HEIGHT];
@@ -92,6 +94,10 @@ public class Ex2 {
         long runTime = System.nanoTime() - startTime;
         double runTimeMs = runTime / 1000000.0;
         System.out.println("Runtime: " + runTimeMs + "ms");
+    }
+
+    private static void parallelApplyEffect() {
+
     }
 
     private static int applyKernel(double[][] neighborhood) {
@@ -149,8 +155,10 @@ public class Ex2 {
                 System.exit(1);
         }
 
+        NUM_THREADS = 4;
+
         loadImage(path);
-        sequentialBlurImage();
+        sequentialApplyEffect();
         writeImage("out.pgm");
     }
 }
