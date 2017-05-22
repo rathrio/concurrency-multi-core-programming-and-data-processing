@@ -20,52 +20,65 @@ public class Ex1 {
     private static int NUM_THREADS;
 
     static class Worker extends Thread {
-        private int start, end, height;
+        private int start, end, width;
         private int[][] pixels;
-        private SynchronousQueue<int[]> sendTop, sendBottom;
-        private SynchronousQueue<int[]> receiveTop, receiveBottom;
+        private SynchronousQueue<int[]> sendLeft, sendRight;
+        private SynchronousQueue<int[]> receiveLeft, receiveRight;
 
-        // end is not included.
         public Worker(int start,
                       int end,
-                      SynchronousQueue<int[]> sendTop,
-                      SynchronousQueue<int[]> sendBottom,
-                      SynchronousQueue<int[]> receiveTop,
-                      SynchronousQueue<int[]> receiveBottom) {
+                      SynchronousQueue<int[]> sendLeft,
+                      SynchronousQueue<int[]> sendRight,
+                      SynchronousQueue<int[]> receiveLeft,
+                      SynchronousQueue<int[]> receiveRight) {
 
             this.start = start;
             this.end = end;
-            this.height = end - start;
+            this.width = end - start;
 
-            this.pixels = new int[WIDTH][height];
-            
-            // Get copy of my strip
-            for (int y = 0; y < height; y++) {
-                for (int x = 0; x < WIDTH; x++) {
-                    // Java ints are immutable. No need for clone.
+            // Initialize strip
+            this.pixels = new int[width][HEIGHT];
+            for (int x = 0; x < width; x++) {
+                for (int y = 0; y < HEIGHT; y++) {
+                    // Java ints are immutable, so no need for clone.
                     pixels[x][y] = PIXELS[x][y];
                 }
             }
 
-            this.sendTop = sendTop;
-            this.sendBottom = sendBottom;
-            this.receiveTop = receiveTop;
-            this.receiveBottom = receiveBottom;
+            this.sendLeft = sendLeft;
+            this.sendRight = sendRight;
+            this.receiveLeft = receiveLeft;
+            this.receiveRight = receiveRight;
 
             System.out.println("start = " + start);
-            if (sendTop != null) {
-                System.out.println("sendTop = " + sendTop.hashCode());
-                System.out.println("receiveTop = " + receiveTop.hashCode());
+            if (sendLeft != null) {
+                System.out.println("sendLeft = " + sendLeft.hashCode());
+                System.out.println("receiveLeft = " + receiveLeft.hashCode());
             }
-            if (sendBottom != null) {
-                System.out.println("sendBottom = " + sendBottom.hashCode());
-                System.out.println("receiveBottom = " + receiveBottom.hashCode());
+            if (sendRight != null) {
+                System.out.println("sendRight = " + sendRight.hashCode());
+                System.out.println("receiveRight = " + receiveRight.hashCode());
             }
             System.out.println();
         }
 
         @Override
         public void run() {
+//            if (sendLeft != null) {
+//                try {
+//                    sendLeft.put(pixels[0]);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//
+//            if (sendRight != null) {
+//                try {
+//                    sendRight.put(pixels[width - 1]);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
     }
 
@@ -137,32 +150,35 @@ public class Ex1 {
         long startTime = System.nanoTime();
 
         Worker[] workers = new Worker[NUM_THREADS];
-        int stripSize = (int) Math.ceil(HEIGHT / NUM_THREADS);
+        int stripSize = (int) Math.ceil(WIDTH / NUM_THREADS);
 
-        SynchronousQueue<int[]> sendTop = null;
-        SynchronousQueue<int[]> receiveTop = null;
+        // First workers left hand queues will be null, since there's noone to
+        // communicate with.
+        SynchronousQueue<int[]> sendLeft = null;
+        SynchronousQueue<int[]> receiveLeft = null;
 
         for (int i = 0; i < NUM_THREADS; i++) {
             int start = i * stripSize;
             int end = start + stripSize;
 
-            SynchronousQueue<int[]> sendBottom = new SynchronousQueue<>();
-            SynchronousQueue<int[]> receiveBottom = new SynchronousQueue<>();
+            SynchronousQueue<int[]> sendRight = new SynchronousQueue<>();
+            SynchronousQueue<int[]> receiveRight = new SynchronousQueue<>();
 
             // For worker that deals with last strip...
             if (i == (NUM_THREADS - 1)) {
                 // make sure we don't iterate too far
-                end = HEIGHT - 1;
-                // and that we don't try the send and receive stuff at the bottom.
-                sendBottom = null;
-                receiveBottom = null;
+                end = WIDTH - 1;
+                // and that we don't try the send and receive stuff at the very right.
+                sendRight = null;
+                receiveRight = null;
             }
 
-            Worker w = new Worker(start, end, sendTop, sendBottom, receiveTop, receiveBottom);
+            Worker w = new Worker(start, end, sendLeft, sendRight, receiveLeft, receiveRight);
             workers[i] = w;
 
-            sendTop = receiveBottom;
-            receiveTop = sendBottom;
+            // Next workers left hand queues should be this workers right hand queues.
+            sendLeft = receiveRight;
+            receiveLeft = sendRight;
         }
 
         for (int i = 0; i < NUM_THREADS; i++) {
