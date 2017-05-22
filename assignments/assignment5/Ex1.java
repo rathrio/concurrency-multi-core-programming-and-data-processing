@@ -6,7 +6,8 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.SynchronousQueue;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 
 public class Ex1 {
     private static int[][] PIXELS;
@@ -22,23 +23,24 @@ public class Ex1 {
     static class Worker extends Thread {
         private int start, end, width;
         private int[][] pixels;
-        private SynchronousQueue<int[]> sendLeft, sendRight;
-        private SynchronousQueue<int[]> receiveLeft, receiveRight;
+        private ArrayBlockingQueue<int[]> sendLeft, sendRight;
+        private ArrayBlockingQueue<int[]> receiveLeft, receiveRight;
 
         public Worker(int start,
                       int end,
-                      SynchronousQueue<int[]> sendLeft,
-                      SynchronousQueue<int[]> sendRight,
-                      SynchronousQueue<int[]> receiveLeft,
-                      SynchronousQueue<int[]> receiveRight) {
+                      ArrayBlockingQueue<int[]> sendLeft,
+                      ArrayBlockingQueue<int[]> sendRight,
+                      ArrayBlockingQueue<int[]> receiveLeft,
+                      ArrayBlockingQueue<int[]> receiveRight) {
 
             this.start = start;
             this.end = end;
             this.width = end - start;
 
             // Initialize strip
-            this.pixels = new int[width][HEIGHT];
-            for (int x = 0; x < width; x++) {
+            this.pixels = new int[width + 2][HEIGHT];
+
+            for (int x = 1; x <= width; x++) {
                 for (int y = 0; y < HEIGHT; y++) {
                     // Java ints are immutable, so no need for clone.
                     pixels[x][y] = PIXELS[x][y];
@@ -49,34 +51,63 @@ public class Ex1 {
             this.sendRight = sendRight;
             this.receiveLeft = receiveLeft;
             this.receiveRight = receiveRight;
-
-            System.out.println("start = " + start);
-            if (sendLeft != null) {
-                System.out.println("sendLeft = " + sendLeft.hashCode());
-                System.out.println("receiveLeft = " + receiveLeft.hashCode());
-            }
-            if (sendRight != null) {
-                System.out.println("sendRight = " + sendRight.hashCode());
-                System.out.println("receiveRight = " + receiveRight.hashCode());
-            }
-            System.out.println();
         }
 
         @Override
         public void run() {
-//            if (sendLeft != null) {
-//                try {
-//                    sendLeft.put(pixels[0]);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//            }
+            int[][] tmpPixels = new int[width + 2][HEIGHT];
+
+            if (sendLeft != null) {
+                try {
+                    sendLeft.put(tmpPixels[1]);
+                    System.out.println("sent to left = " + start);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (sendRight != null) {
+                try {
+                    sendRight.put(tmpPixels[width]);
+                    System.out.println("sent to right = " + start);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (receiveRight != null) {
+                try {
+                    tmpPixels[width + 1] = receiveRight.take();
+                    System.out.println("taken from right = " + start);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
+            if (receiveLeft != null) {
+                try {
+                    tmpPixels[0] = receiveLeft.take();
+                    System.out.println("taken from left = " + start);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            }
+
 //
-//            if (sendRight != null) {
-//                try {
-//                    sendRight.put(pixels[width - 1]);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
+//            for (int y = 0; y < HEIGHT; y++) {
+//                for (int x = 0; x < width; x++) {
+//                    tmpPixels[x][y] = pixels[x][y];
+//
+//                    // Skip dead pixels.
+//                    if (pixels[x][y] <= ALIVENESS_THRESHOLD) {
+//                        continue;
+//                    }
+//
+//                    // If current pixel doesn't have at least D alive neighbors,
+//                    // turn it off.
+//                    if (numAliveNeighbors(x, y, pixels) < D) {
+//                        tmpPixels[x][y] = ALIVENESS_THRESHOLD;
+//                    }
 //                }
 //            }
         }
@@ -154,15 +185,15 @@ public class Ex1 {
 
         // First workers left hand queues will be null, since there's noone to
         // communicate with.
-        SynchronousQueue<int[]> sendLeft = null;
-        SynchronousQueue<int[]> receiveLeft = null;
+        ArrayBlockingQueue<int[]> sendLeft = null;
+        ArrayBlockingQueue<int[]> receiveLeft = null;
 
         for (int i = 0; i < NUM_THREADS; i++) {
             int start = i * stripSize;
             int end = start + stripSize;
 
-            SynchronousQueue<int[]> sendRight = new SynchronousQueue<>();
-            SynchronousQueue<int[]> receiveRight = new SynchronousQueue<>();
+            ArrayBlockingQueue<int[]> sendRight = new ArrayBlockingQueue<>(1);
+            ArrayBlockingQueue<int[]> receiveRight = new ArrayBlockingQueue<>(1);
 
             // For worker that deals with last strip...
             if (i == (NUM_THREADS - 1)) {
