@@ -16,7 +16,11 @@ public class Ex1 {
     // If a pixel has >= D live neighbors, it will not be turned off.
     private static int D;
 
+    // 0. Can be set to higher values when processing images that don't have
+    // any 0 black values.
     private static int ALIVENESS_THRESHOLD;
+
+    // Number of workers.
     private static int NUM_THREADS;
 
     static class Worker extends Thread {
@@ -35,14 +39,19 @@ public class Ex1 {
 
             this.start = start;
             this.end = end;
-            
-            // the original right most index, e.g., 3 in a 4 pixel strip.
+
+            // The original size
             this.stripSize = end - start;
+
             this.paddedStripSize = stripSize + 2;
 
-            // Initialize strip with padding for left and right side
+            // Initialize strip with padding for left and right column. Since
+            // Java arrays int arrays are instantiated with 0 by default,
+            // we don't have to handle the border cases here. 0 values don't
+            // impair the neighborhood lookup.
             this.pixels = new int[paddedStripSize][HEIGHT];
 
+            // Copy my strip from global pixels
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = start; x < end; x++) {
                     int xx = x - start + 1;
@@ -51,6 +60,8 @@ public class Ex1 {
                 }
             }
 
+            // Use array blocking queues for communicating with neighbors.
+            // Main thread takes care of correctly setting the queues.
             this.sendLeft = sendLeft;
             this.sendRight = sendRight;
             this.receiveLeft = receiveLeft;
@@ -283,7 +294,7 @@ public class Ex1 {
         int[][] tmpPixels = null;
         boolean changes = true;
 
-//        while(changes) {
+        while(changes) {
             tmpPixels = new int[WIDTH][HEIGHT];
 
             for (int y = 0; y < HEIGHT; y++) {
@@ -308,7 +319,7 @@ public class Ex1 {
             }
 
             PIXELS = tmpPixels;
-//        }
+        }
 
         long runTime = System.nanoTime() - startTime;
         double runTimeMs = runTime / 1000000.0;
