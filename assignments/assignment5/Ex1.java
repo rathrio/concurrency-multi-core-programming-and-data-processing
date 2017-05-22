@@ -16,6 +16,7 @@ public class Ex1 {
     private static int D;
 
     private static int ALIVENESS_THRESHOLD;
+    private static int NUM_THREADS;
 
     // Loads pgm image to the 2D int array pixels in this class.
     private static void loadImage(String path) {
@@ -80,7 +81,15 @@ public class Ex1 {
         }
     }
 
-    private static void sequentialSmoothEdges() {
+    private static void parallelRemoveHotPixels() {
+        long startTime = System.nanoTime();
+
+        long runTime = System.nanoTime() - startTime;
+        double runTimeMs = runTime / 1000000.0;
+        System.out.println("Runtime: " + runTimeMs + "ms");
+    }
+
+    private static void sequentialRemoveHotPixels() {
         long startTime = System.nanoTime();
 
         int[][] tmpPixels = null;
@@ -194,17 +203,18 @@ public class Ex1 {
     }
 
     public static void main(String[] args) {
-        if (args.length < 3) {
-            System.out.println("Usage: java Ex1 <IMAGE> <D> <ALIVENESS_THRESHOLD>");
+        if (args.length < 4) {
+            System.out.println("Usage: java Ex1 <IMAGE> <D> <NUM_THREADS> <ALIVENESS_THRESHOLD>");
             return;
         }
 
         String path = args[0];
         D = Integer.parseInt(args[1]);
-        ALIVENESS_THRESHOLD = Integer.parseInt(args[2]);
+        NUM_THREADS = Integer.parseInt(args[2]);
+        ALIVENESS_THRESHOLD = Integer.parseInt(args[3]);
 
         loadImage(path);
-        sequentialSmoothEdges();
+        sequentialRemoveHotPixels();
         writeImage("out.pgm");
     }
 }

@@ -215,20 +215,13 @@ public class Ex2 {
 
     public static void main(String[] args) {
         if (args.length < 3) {
-            System.out.println("Usage: java Ex1 <IMAGE> <EFFECT> <NUM_THREADS> [<SEQUENTIAL>]");
+            System.out.println("Usage: java Ex1 <IMAGE> <EFFECT> <NUM_THREADS>");
             System.exit(1);
         }
 
         String path = args[0];
         String effect = args[1];
         NUM_THREADS = Integer.parseInt(args[2]);
-
-        // Will use sequential method when set to 1.
-        int sequential = 0;
-
-        if (args.length > 3) {
-            sequential = Integer.parseInt(args[3]);
-        }
 
         switch (effect.toLowerCase()) {
             case "blur":
@@ -258,7 +251,7 @@ public class Ex2 {
 
         loadImage(path);
 
-        if (sequential != 0) {
+        if (NUM_THREADS == 1) {
             sequentialApplyEffect();
             writeImage("out_sequential.pgm");
         } else {
