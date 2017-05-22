@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.PriorityBlockingQueue;
 
 public class Ex1 {
     private static int[][] PIXELS;
@@ -22,7 +21,7 @@ public class Ex1 {
 
     static class Worker extends Thread {
         private int start, end, width;
-        private int[][] pixels;
+        private int[][] pixels, tmpPixels;
         private ArrayBlockingQueue<int[]> sendLeft, sendRight;
         private ArrayBlockingQueue<int[]> receiveLeft, receiveRight;
 
@@ -40,10 +39,11 @@ public class Ex1 {
             // Initialize strip
             this.pixels = new int[width + 2][HEIGHT];
 
-            for (int x = 1; x <= width; x++) {
-                for (int y = 0; y < HEIGHT; y++) {
-                    // Java ints are immutable, so no need for clone.
-                    pixels[x][y] = PIXELS[x][y];
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int x = start; x <= end; x++) {
+                    int xx = x - start + 1;
+
+                    pixels[xx][y] = PIXELS[x][y];
                 }
             }
 
@@ -55,61 +55,94 @@ public class Ex1 {
 
         @Override
         public void run() {
-            int[][] tmpPixels = new int[width + 2][HEIGHT];
+            tmpPixels = new int[width + 2][HEIGHT];
 
-            if (sendLeft != null) {
-                try {
-                    sendLeft.put(tmpPixels[1]);
-                    System.out.println("sent to left = " + start);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            sendLeft();
+            sendRight();
+            receiveRight();
+            receiveLeft();
+
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int x = 1; x <= width; x++) {
+                    tmpPixels[x][y] = pixels[x][y];
+
+                    // Skip dead pixels.
+                    if (pixels[x][y] <= ALIVENESS_THRESHOLD) {
+                        continue;
+                    }
+
+                    // If current pixel doesn't have at least D alive neighbors,
+                    // turn it off.
+                    if (numAliveNeighbors(x, y, pixels) < D) {
+                        tmpPixels[x][y] = ALIVENESS_THRESHOLD;
+                    }
                 }
             }
 
-            if (sendRight != null) {
-                try {
-                    sendRight.put(tmpPixels[width]);
-                    System.out.println("sent to right = " + start);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+            pixels = tmpPixels;
+
+            updateGlobalPixels();
+        }
+
+        private void updateGlobalPixels() {
+            for (int y = 0; y < HEIGHT; y++) {
+                for (int x = 1; x <= width; x++) {
+                    int xx = x + start - 1;
+                    PIXELS[xx][y] = pixels[x][y];
                 }
             }
+        }
 
-            if (receiveRight != null) {
-                try {
-                    tmpPixels[width + 1] = receiveRight.take();
-                    System.out.println("taken from right = " + start);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+        private void receiveLeft() {
+            if (receiveLeft == null) {
+                return;
             }
 
-            if (receiveLeft != null) {
-                try {
-                    tmpPixels[0] = receiveLeft.take();
-                    System.out.println("taken from left = " + start);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
+            try {
+                tmpPixels[0] = receiveLeft.take();
+//                    System.out.println("taken from left = " + start);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void receiveRight() {
+            if (receiveRight == null) {
+                return;
             }
 
-//
-//            for (int y = 0; y < HEIGHT; y++) {
-//                for (int x = 0; x < width; x++) {
-//                    tmpPixels[x][y] = pixels[x][y];
-//
-//                    // Skip dead pixels.
-//                    if (pixels[x][y] <= ALIVENESS_THRESHOLD) {
-//                        continue;
-//                    }
-//
-//                    // If current pixel doesn't have at least D alive neighbors,
-//                    // turn it off.
-//                    if (numAliveNeighbors(x, y, pixels) < D) {
-//                        tmpPixels[x][y] = ALIVENESS_THRESHOLD;
-//                    }
-//                }
-//            }
+            try {
+                tmpPixels[width + 1] = receiveRight.take();
+//                    System.out.println("taken from right = " + start);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void sendRight() {
+            if (sendRight == null) {
+                return;
+            }
+
+            try {
+                sendRight.put(tmpPixels[width]);
+//                    System.out.println("sent to right = " + start);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+        private void sendLeft() {
+            if (sendLeft == null) {
+                return;
+            }
+
+            try {
+                sendLeft.put(tmpPixels[1]);
+//                    System.out.println("sent to left = " + start);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -207,7 +240,7 @@ public class Ex1 {
             Worker w = new Worker(start, end, sendLeft, sendRight, receiveLeft, receiveRight);
             workers[i] = w;
 
-            // Next workers left hand queues should be this workers right hand queues.
+            // Next worker's left hand queues should be this worker's right hand queues.
             sendLeft = receiveRight;
             receiveLeft = sendRight;
         }
@@ -215,7 +248,6 @@ public class Ex1 {
         for (int i = 0; i < NUM_THREADS; i++) {
             workers[i].start();
         }
-
 
         for (int i = 0; i < NUM_THREADS; i++) {
             try {
@@ -238,7 +270,7 @@ public class Ex1 {
         int[][] tmpPixels = null;
         boolean changes = true;
 
-        while(changes) {
+//        while(changes) {
             tmpPixels = new int[WIDTH][HEIGHT];
 
             for (int y = 0; y < HEIGHT; y++) {
@@ -263,7 +295,7 @@ public class Ex1 {
             }
 
             PIXELS = tmpPixels;
-        }
+//        }
 
         long runTime = System.nanoTime() - startTime;
         double runTimeMs = runTime / 1000000.0;
