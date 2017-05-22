@@ -20,7 +20,7 @@ public class Ex1 {
     private static int NUM_THREADS;
 
     static class Worker extends Thread {
-        private int start, end, rightmostIndex, paddedStripSize;
+        private int start, end, stripSize, paddedStripSize;
         private int[][] pixels, tmpPixels;
         private boolean changes;
         private ArrayBlockingQueue<int[]> sendLeft, sendRight;
@@ -37,10 +37,10 @@ public class Ex1 {
             this.end = end;
             
             // the original right most index, e.g., 3 in a 4 pixel strip.
-            this.rightmostIndex = end - start - 1;
-            this.paddedStripSize = rightmostIndex + 3;
+            this.stripSize = end - start;
+            this.paddedStripSize = stripSize + 2;
 
-            // Initialize strip with padding for left and right side (+ 2)
+            // Initialize strip with padding for left and right side
             this.pixels = new int[paddedStripSize][HEIGHT];
 
             for (int y = 0; y < HEIGHT; y++) {
@@ -70,7 +70,7 @@ public class Ex1 {
                 receiveLeft();
 
                 for (int y = 0; y < HEIGHT; y++) {
-                    for (int x = 1; x <= (rightmostIndex + 1); x++) {
+                    for (int x = 1; x <= stripSize; x++) {
                         tmpPixels[x][y] = pixels[x][y];
 
                         // Skip dead pixels.
@@ -100,7 +100,7 @@ public class Ex1 {
 
         private void updateGlobalPixels() {
             for (int y = 0; y < HEIGHT; y++) {
-                for (int x = 1; x <= (rightmostIndex + 1); x++) {
+                for (int x = 1; x <= stripSize; x++) {
                     int xx = x + start - 1;
                     PIXELS[xx][y] = pixels[x][y];
                 }
@@ -125,7 +125,7 @@ public class Ex1 {
             }
 
             try {
-                pixels[rightmostIndex + 2] = receiveRight.take();
+                pixels[stripSize + 1] = receiveRight.take();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -138,7 +138,7 @@ public class Ex1 {
 
             try {
                 int[] send = new int[HEIGHT];
-                System.arraycopy(pixels[rightmostIndex + 1],0, send, 0, HEIGHT);
+                System.arraycopy(pixels[stripSize],0, send, 0, HEIGHT);
                 sendRight.put(send);
             } catch (InterruptedException e) {
                 e.printStackTrace();
