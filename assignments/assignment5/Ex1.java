@@ -18,6 +18,15 @@ public class Ex1 {
     private static int ALIVENESS_THRESHOLD;
     private static int NUM_THREADS;
 
+    static class Worker extends Thread {
+        public Worker(int start, int end) {
+        }
+
+        @Override
+        public void run() {
+        }
+    }
+
     // Loads pgm image to the 2D int array pixels in this class.
     private static void loadImage(String path) {
         try {
@@ -82,21 +91,52 @@ public class Ex1 {
     }
 
     private static void parallelRemoveHotPixels() {
+        System.out.println("Running concurrently...");
         long startTime = System.nanoTime();
+
+        Worker[] workers = new Worker[NUM_THREADS];
+        int stripSize = (int) Math.ceil(HEIGHT / NUM_THREADS);
+        System.out.println("stripSize = " + stripSize);
+
+        for (int i = 0; i < NUM_THREADS; i++) {
+            int start = i * stripSize;
+            int end = start + stripSize;
+
+            if (i == (NUM_THREADS - 1)) {
+                end = HEIGHT - 1;
+            }
+
+            System.out.println("start = " + start);
+            System.out.println("end = " + end);
+            System.out.println();
+            Worker w = new Worker(start, end);
+            workers[i] = w;
+            w.start();
+        }
+
+
+        for (int i = 0; i < NUM_THREADS; i++) {
+            try {
+                workers[i].join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
 
         long runTime = System.nanoTime() - startTime;
         double runTimeMs = runTime / 1000000.0;
         System.out.println("Runtime: " + runTimeMs + "ms");
     }
 
+    // Sequential version that was used for comparison. Feel free to ignore this.
     private static void sequentialRemoveHotPixels() {
+        System.out.println("Running sequentially...");
         long startTime = System.nanoTime();
 
         int[][] tmpPixels = null;
         boolean changes = true;
 
         while(changes) {
-            System.out.println("ITERATING");
             tmpPixels = new int[WIDTH][HEIGHT];
 
             for (int y = 0; y < HEIGHT; y++) {
@@ -110,7 +150,7 @@ public class Ex1 {
 
                     // If current pixel doesn't have at least D alive neighbors,
                     // turn it off.
-                    if (numAliveNeighbors(x, y) < D) {
+                    if (numAliveNeighbors(x, y, PIXELS) < D) {
                         tmpPixels[x][y] = ALIVENESS_THRESHOLD;
                     }
                 }
@@ -128,67 +168,67 @@ public class Ex1 {
         System.out.println("Runtime: " + runTimeMs + "ms");
     }
 
-    private static int numAliveNeighbors(int x, int y) {
+    private static int numAliveNeighbors(int x, int y, int[][] pixels) {
         ArrayList<Integer> neighbors = new ArrayList<>();
 
         if (x == 0 && y == 0) {
             // Top-left corner
-            neighbors.add(PIXELS[x + 1][y]);
-            neighbors.add(PIXELS[x + 1][y + 1]);
-            neighbors.add(PIXELS[x][y + 1]);
+            neighbors.add(pixels[x + 1][y]);
+            neighbors.add(pixels[x + 1][y + 1]);
+            neighbors.add(pixels[x][y + 1]);
         } else if ((x == (WIDTH - 1)) && (y == (HEIGHT - 1))) {
             // Bottom-right corner
-            neighbors.add(PIXELS[x - 1][y]);
-            neighbors.add(PIXELS[x - 1][y - 1]);
-            neighbors.add(PIXELS[x][y - 1]);
+            neighbors.add(pixels[x - 1][y]);
+            neighbors.add(pixels[x - 1][y - 1]);
+            neighbors.add(pixels[x][y - 1]);
         } else if ((x == (WIDTH - 1)) && (y == 0)) {
             // Top-right corner
-            neighbors.add(PIXELS[x - 1][y]);
-            neighbors.add(PIXELS[x - 1][y + 1]);
-            neighbors.add(PIXELS[x][y + 1]);
+            neighbors.add(pixels[x - 1][y]);
+            neighbors.add(pixels[x - 1][y + 1]);
+            neighbors.add(pixels[x][y + 1]);
         } else if ((x == 0) && (y == (HEIGHT - 1))) {
             // Bottom-left corner
-            neighbors.add(PIXELS[x][y - 1]);
-            neighbors.add(PIXELS[x + 1][y - 1]);
-            neighbors.add(PIXELS[x + 1][y]);
+            neighbors.add(pixels[x][y - 1]);
+            neighbors.add(pixels[x + 1][y - 1]);
+            neighbors.add(pixels[x + 1][y]);
         } else if (x == 0) {
             // Left edge
-            neighbors.add(PIXELS[x][y - 1]);
-            neighbors.add(PIXELS[x + 1][y - 1]);
-            neighbors.add(PIXELS[x + 1][y]);
-            neighbors.add(PIXELS[x + 1][y + 1]);
-            neighbors.add(PIXELS[x][y + 1]);
+            neighbors.add(pixels[x][y - 1]);
+            neighbors.add(pixels[x + 1][y - 1]);
+            neighbors.add(pixels[x + 1][y]);
+            neighbors.add(pixels[x + 1][y + 1]);
+            neighbors.add(pixels[x][y + 1]);
         } else if (x == (WIDTH - 1)) {
             // Right edge
-            neighbors.add(PIXELS[x][y - 1]);
-            neighbors.add(PIXELS[x - 1][y - 1]);
-            neighbors.add(PIXELS[x - 1][y]);
-            neighbors.add(PIXELS[x - 1][y + 1]);
-            neighbors.add(PIXELS[x][y + 1]);
+            neighbors.add(pixels[x][y - 1]);
+            neighbors.add(pixels[x - 1][y - 1]);
+            neighbors.add(pixels[x - 1][y]);
+            neighbors.add(pixels[x - 1][y + 1]);
+            neighbors.add(pixels[x][y + 1]);
         } else if (y == 0) {
             // Top edge
-            neighbors.add(PIXELS[x - 1][y]);
-            neighbors.add(PIXELS[x - 1][y + 1]);
-            neighbors.add(PIXELS[x][y + 1]);
-            neighbors.add(PIXELS[x + 1][y + 1]);
-            neighbors.add(PIXELS[x + 1][y]);
+            neighbors.add(pixels[x - 1][y]);
+            neighbors.add(pixels[x - 1][y + 1]);
+            neighbors.add(pixels[x][y + 1]);
+            neighbors.add(pixels[x + 1][y + 1]);
+            neighbors.add(pixels[x + 1][y]);
         } else if (y == (HEIGHT - 1)) {
             // Bottom edge
-            neighbors.add(PIXELS[x - 1][y]);
-            neighbors.add(PIXELS[x - 1][y - 1]);
-            neighbors.add(PIXELS[x][y - 1]);
-            neighbors.add(PIXELS[x + 1][y - 1]);
-            neighbors.add(PIXELS[x + 1][y]);
+            neighbors.add(pixels[x - 1][y]);
+            neighbors.add(pixels[x - 1][y - 1]);
+            neighbors.add(pixels[x][y - 1]);
+            neighbors.add(pixels[x + 1][y - 1]);
+            neighbors.add(pixels[x + 1][y]);
         } else {
             // Somewhere in the middle
-            neighbors.add(PIXELS[x - 1][y]);
-            neighbors.add(PIXELS[x + 1][y]);
-            neighbors.add(PIXELS[x][y - 1]);
-            neighbors.add(PIXELS[x][y + 1]);
-            neighbors.add(PIXELS[x - 1][y - 1]);
-            neighbors.add(PIXELS[x + 1][y + 1]);
-            neighbors.add(PIXELS[x + 1][y - 1]);
-            neighbors.add(PIXELS[x - 1][y + 1]);
+            neighbors.add(pixels[x - 1][y]);
+            neighbors.add(pixels[x + 1][y]);
+            neighbors.add(pixels[x][y - 1]);
+            neighbors.add(pixels[x][y + 1]);
+            neighbors.add(pixels[x - 1][y - 1]);
+            neighbors.add(pixels[x + 1][y + 1]);
+            neighbors.add(pixels[x + 1][y - 1]);
+            neighbors.add(pixels[x - 1][y + 1]);
         }
 
         // Count alive neighbors.
@@ -214,7 +254,13 @@ public class Ex1 {
         ALIVENESS_THRESHOLD = Integer.parseInt(args[3]);
 
         loadImage(path);
-        sequentialRemoveHotPixels();
-        writeImage("out.pgm");
+
+        if (NUM_THREADS == 1) {
+            sequentialRemoveHotPixels();
+            writeImage("out_sequential.pgm");
+        } else {
+            parallelRemoveHotPixels();
+            writeImage("out.pgm");
+        }
     }
 }
