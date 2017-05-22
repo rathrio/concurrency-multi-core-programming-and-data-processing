@@ -54,8 +54,8 @@ public class Ex1 {
             // Copy my strip from global pixels
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = start; x < end; x++) {
+                    // Translate to pixels coordinates.
                     int xx = x - start + 1;
-
                     pixels[xx][y] = PIXELS[x][y];
                 }
             }
@@ -74,7 +74,8 @@ public class Ex1 {
         public void run() {
             tmpPixels = new int[paddedStripSize][HEIGHT];
 
-//            while (changes) {
+            while (changes) {
+                System.out.println("Iterating start = " + start);
                 sendLeft();
                 sendRight();
                 receiveRight();
@@ -102,9 +103,7 @@ public class Ex1 {
                 }
 
                 pixels = tmpPixels;
-
-
-//            }
+            }
 
             updateGlobalPixels();
         }
@@ -112,6 +111,7 @@ public class Ex1 {
         private void updateGlobalPixels() {
             for (int y = 0; y < HEIGHT; y++) {
                 for (int x = 1; x <= stripSize; x++) {
+                    // Translate to PIXELS coordinates.
                     int xx = x + start - 1;
                     PIXELS[xx][y] = pixels[x][y];
                 }
