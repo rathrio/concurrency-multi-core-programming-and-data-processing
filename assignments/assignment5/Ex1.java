@@ -52,17 +52,16 @@ public class Ex1 {
             this.receiveTop = receiveTop;
             this.receiveBottom = receiveBottom;
 
-
-
-            // I'm the worker taking care of the first strip.
-            if (start == 0) {
-
+            System.out.println("start = " + start);
+            if (sendTop != null) {
+                System.out.println("sendTop = " + sendTop.hashCode());
+                System.out.println("receiveTop = " + receiveTop.hashCode());
             }
-
-            // I'm the worker taking care of the last strip.
-            if (end == (HEIGHT - 1)) {
-
+            if (sendBottom != null) {
+                System.out.println("sendBottom = " + sendBottom.hashCode());
+                System.out.println("receiveBottom = " + receiveBottom.hashCode());
             }
+            System.out.println();
         }
 
         @Override
@@ -141,21 +140,33 @@ public class Ex1 {
         int stripSize = (int) Math.ceil(HEIGHT / NUM_THREADS);
 
         SynchronousQueue<int[]> sendTop = null;
-        SynchronousQueue<int[]> sendBottom = null;
         SynchronousQueue<int[]> receiveTop = null;
-        SynchronousQueue<int[]> receiveBottom = null;
 
         for (int i = 0; i < NUM_THREADS; i++) {
             int start = i * stripSize;
             int end = start + stripSize;
 
+            SynchronousQueue<int[]> sendBottom = new SynchronousQueue<>();
+            SynchronousQueue<int[]> receiveBottom = new SynchronousQueue<>();
+
+            // For worker that deals with last strip...
             if (i == (NUM_THREADS - 1)) {
+                // make sure we don't iterate too far
                 end = HEIGHT - 1;
+                // and that we don't try the send and receive stuff at the bottom.
+                sendBottom = null;
+                receiveBottom = null;
             }
 
             Worker w = new Worker(start, end, sendTop, sendBottom, receiveTop, receiveBottom);
             workers[i] = w;
-            w.start();
+
+            sendTop = receiveBottom;
+            receiveTop = sendBottom;
+        }
+
+        for (int i = 0; i < NUM_THREADS; i++) {
+            workers[i].start();
         }
 
 
