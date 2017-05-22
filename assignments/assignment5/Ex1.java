@@ -23,19 +23,27 @@ public class Ex1 {
     // Number of workers.
     private static int NUM_THREADS;
 
+    static class Coordinator extends Thread {
+
+    }
+
     static class Worker extends Thread {
+        private int id;
         private int start, end, stripSize, paddedStripSize;
         private int[][] pixels, tmpPixels;
         private boolean changes;
         private ArrayBlockingQueue<int[]> sendLeft, sendRight;
         private ArrayBlockingQueue<int[]> receiveLeft, receiveRight;
 
-        public Worker(int start,
+        public Worker(int id,
+                      int start,
                       int end,
                       ArrayBlockingQueue<int[]> sendLeft,
                       ArrayBlockingQueue<int[]> sendRight,
                       ArrayBlockingQueue<int[]> receiveLeft,
                       ArrayBlockingQueue<int[]> receiveRight) {
+
+            this.id = id;
 
             this.start = start;
             this.end = end;
@@ -261,7 +269,7 @@ public class Ex1 {
                 receiveRight = null;
             }
 
-            Worker w = new Worker(start, end, sendLeft, sendRight, receiveLeft, receiveRight);
+            Worker w = new Worker(i, start, end, sendLeft, sendRight, receiveLeft, receiveRight);
             workers[i] = w;
 
             // Next worker's left hand queues should be this worker's right hand queues.
