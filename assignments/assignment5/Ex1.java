@@ -6,6 +6,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.SynchronousQueue;
 
 public class Ex1 {
     private static int[][] PIXELS;
@@ -19,7 +20,49 @@ public class Ex1 {
     private static int NUM_THREADS;
 
     static class Worker extends Thread {
-        public Worker(int start, int end) {
+        private int start, end, height;
+        private int[][] pixels;
+        private SynchronousQueue<int[]> sendTop, sendBottom;
+        private SynchronousQueue<int[]> receiveTop, receiveBottom;
+
+        // end is not included.
+        public Worker(int start,
+                      int end,
+                      SynchronousQueue<int[]> sendTop,
+                      SynchronousQueue<int[]> sendBottom,
+                      SynchronousQueue<int[]> receiveTop,
+                      SynchronousQueue<int[]> receiveBottom) {
+
+            this.start = start;
+            this.end = end;
+            this.height = end - start;
+
+            this.pixels = new int[WIDTH][height];
+            
+            // Get copy of my strip
+            for (int y = 0; y < height; y++) {
+                for (int x = 0; x < WIDTH; x++) {
+                    // Java ints are immutable. No need for clone.
+                    pixels[x][y] = PIXELS[x][y];
+                }
+            }
+
+            this.sendTop = sendTop;
+            this.sendBottom = sendBottom;
+            this.receiveTop = receiveTop;
+            this.receiveBottom = receiveBottom;
+
+
+
+            // I'm the worker taking care of the first strip.
+            if (start == 0) {
+
+            }
+
+            // I'm the worker taking care of the last strip.
+            if (end == (HEIGHT - 1)) {
+
+            }
         }
 
         @Override
@@ -96,7 +139,11 @@ public class Ex1 {
 
         Worker[] workers = new Worker[NUM_THREADS];
         int stripSize = (int) Math.ceil(HEIGHT / NUM_THREADS);
-        System.out.println("stripSize = " + stripSize);
+
+        SynchronousQueue<int[]> sendTop = null;
+        SynchronousQueue<int[]> sendBottom = null;
+        SynchronousQueue<int[]> receiveTop = null;
+        SynchronousQueue<int[]> receiveBottom = null;
 
         for (int i = 0; i < NUM_THREADS; i++) {
             int start = i * stripSize;
@@ -106,10 +153,7 @@ public class Ex1 {
                 end = HEIGHT - 1;
             }
 
-            System.out.println("start = " + start);
-            System.out.println("end = " + end);
-            System.out.println();
-            Worker w = new Worker(start, end);
+            Worker w = new Worker(start, end, sendTop, sendBottom, receiveTop, receiveBottom);
             workers[i] = w;
             w.start();
         }
