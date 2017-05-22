@@ -20,8 +20,9 @@ public class Ex1 {
     private static int NUM_THREADS;
 
     static class Worker extends Thread {
-        private int start, end, width;
+        private int start, end, rightmostIndex, paddedStripSize;
         private int[][] pixels, tmpPixels;
+        private boolean changes;
         private ArrayBlockingQueue<int[]> sendLeft, sendRight;
         private ArrayBlockingQueue<int[]> receiveLeft, receiveRight;
 
@@ -34,13 +35,16 @@ public class Ex1 {
 
             this.start = start;
             this.end = end;
-            this.width = end - start;
+            
+            // the original right most index, e.g., 3 in a 4 pixel strip.
+            this.rightmostIndex = end - start - 1;
+            this.paddedStripSize = rightmostIndex + 3;
 
-            // Initialize strip
-            this.pixels = new int[width + 2][HEIGHT];
+            // Initialize strip with padding for left and right side (+ 2)
+            this.pixels = new int[paddedStripSize][HEIGHT];
 
             for (int y = 0; y < HEIGHT; y++) {
-                for (int x = start; x <= end; x++) {
+                for (int x = start; x < end; x++) {
                     int xx = x - start + 1;
 
                     pixels[xx][y] = PIXELS[x][y];
@@ -51,42 +55,52 @@ public class Ex1 {
             this.sendRight = sendRight;
             this.receiveLeft = receiveLeft;
             this.receiveRight = receiveRight;
+
+            this.changes = true;
         }
 
         @Override
         public void run() {
-            tmpPixels = new int[width + 2][HEIGHT];
+            tmpPixels = new int[paddedStripSize][HEIGHT];
 
-            sendLeft();
-            sendRight();
-            receiveRight();
-            receiveLeft();
+//            while (changes) {
+                sendLeft();
+                sendRight();
+                receiveRight();
+                receiveLeft();
 
-            for (int y = 0; y < HEIGHT; y++) {
-                for (int x = 1; x <= width; x++) {
-                    tmpPixels[x][y] = pixels[x][y];
+                for (int y = 0; y < HEIGHT; y++) {
+                    for (int x = 1; x <= (rightmostIndex + 1); x++) {
+                        tmpPixels[x][y] = pixels[x][y];
 
-                    // Skip dead pixels.
-                    if (pixels[x][y] <= ALIVENESS_THRESHOLD) {
-                        continue;
-                    }
+                        // Skip dead pixels.
+                        if (pixels[x][y] <= ALIVENESS_THRESHOLD) {
+                            continue;
+                        }
 
-                    // If current pixel doesn't have at least D alive neighbors,
-                    // turn it off.
-                    if (numAliveNeighbors(x, y, pixels) < D) {
-                        tmpPixels[x][y] = ALIVENESS_THRESHOLD;
+                        // If current pixel doesn't have at least D alive neighbors,
+                        // turn it off.
+                        if (numAliveNeighbors(x, y, pixels) < D) {
+                            tmpPixels[x][y] = ALIVENESS_THRESHOLD;
+                        }
                     }
                 }
-            }
 
-            pixels = tmpPixels;
+                if (Arrays.deepEquals(pixels, tmpPixels)) {
+                    changes = false;
+                }
+
+                pixels = tmpPixels;
+
+
+//            }
 
             updateGlobalPixels();
         }
 
         private void updateGlobalPixels() {
             for (int y = 0; y < HEIGHT; y++) {
-                for (int x = 1; x <= width; x++) {
+                for (int x = 1; x <= (rightmostIndex + 1); x++) {
                     int xx = x + start - 1;
                     PIXELS[xx][y] = pixels[x][y];
                 }
@@ -99,8 +113,7 @@ public class Ex1 {
             }
 
             try {
-                tmpPixels[0] = receiveLeft.take();
-//                    System.out.println("taken from left = " + start);
+                pixels[0] = receiveLeft.take();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -112,8 +125,7 @@ public class Ex1 {
             }
 
             try {
-                tmpPixels[width + 1] = receiveRight.take();
-//                    System.out.println("taken from right = " + start);
+                pixels[rightmostIndex + 2] = receiveRight.take();
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -125,8 +137,9 @@ public class Ex1 {
             }
 
             try {
-                sendRight.put(tmpPixels[width]);
-//                    System.out.println("sent to right = " + start);
+                int[] send = new int[HEIGHT];
+                System.arraycopy(pixels[rightmostIndex + 1],0, send, 0, HEIGHT);
+                sendRight.put(send);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -138,8 +151,9 @@ public class Ex1 {
             }
 
             try {
-                sendLeft.put(tmpPixels[1]);
-//                    System.out.println("sent to left = " + start);
+                int[] send = new int[HEIGHT];
+                System.arraycopy(pixels[1],0, send, 0, HEIGHT);
+                sendLeft.put(send);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
@@ -228,11 +242,10 @@ public class Ex1 {
             ArrayBlockingQueue<int[]> sendRight = new ArrayBlockingQueue<>(1);
             ArrayBlockingQueue<int[]> receiveRight = new ArrayBlockingQueue<>(1);
 
-            // For worker that deals with last strip...
+            // No need to communicate with further right if we're working with
+            // rightmost strip.
             if (i == (NUM_THREADS - 1)) {
-                // make sure we don't iterate too far
-                end = WIDTH - 1;
-                // and that we don't try the send and receive stuff at the very right.
+                end = WIDTH;
                 sendRight = null;
                 receiveRight = null;
             }
