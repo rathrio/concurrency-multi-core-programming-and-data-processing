@@ -24,16 +24,47 @@ public class Ex1 {
     private static int NUM_THREADS;
 
     static class Coordinator extends Thread {
+        private ArrayBlockingQueue<Boolean>[] results, answers;
 
+        public Coordinator(ArrayBlockingQueue<Boolean>[] results, ArrayBlockingQueue<Boolean>[] answers) {
+            this.results = results;
+            this.answers = answers;
+        }
+
+        @Override
+        public void run() {
+            boolean chg, changes = true;
+
+            while (changes) {
+                changes = false;
+
+                for (int i = 0; i < results.length; i++) {
+                    try {
+                        chg = results[i].take();
+                        changes = changes || chg;
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+
+                for (int i = 0; i < answers.length; i++) {
+                    try {
+                        answers[i].put(changes);
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+
+        }
     }
 
     static class Worker extends Thread {
-        private int id;
-        private int start, end, stripSize, paddedStripSize;
+        private int id, start, end, stripSize, paddedStripSize;
         private int[][] pixels, tmpPixels;
         private boolean changes;
-        private ArrayBlockingQueue<int[]> sendLeft, sendRight;
-        private ArrayBlockingQueue<int[]> receiveLeft, receiveRight;
+        private ArrayBlockingQueue<int[]> sendLeft, sendRight, receiveLeft, receiveRight;
+        private ArrayBlockingQueue<Boolean> result, answer;
 
         public Worker(int id,
                       int start,
@@ -41,7 +72,9 @@ public class Ex1 {
                       ArrayBlockingQueue<int[]> sendLeft,
                       ArrayBlockingQueue<int[]> sendRight,
                       ArrayBlockingQueue<int[]> receiveLeft,
-                      ArrayBlockingQueue<int[]> receiveRight) {
+                      ArrayBlockingQueue<int[]> receiveRight,
+                      ArrayBlockingQueue<Boolean> result,
+                      ArrayBlockingQueue<Boolean> answer) {
 
             this.id = id;
 
@@ -75,20 +108,27 @@ public class Ex1 {
             this.receiveLeft = receiveLeft;
             this.receiveRight = receiveRight;
 
+            this.result = result;
+            this.answer = answer;
+
+            // Have I changed since previous iteration?
             this.changes = true;
         }
 
         @Override
         public void run() {
-            tmpPixels = new int[paddedStripSize][HEIGHT];
-
             while (changes) {
-                System.out.println("Iterating start = " + start);
+                // Word on copy to be able to test for changes.
+                tmpPixels = new int[paddedStripSize][HEIGHT];
+
+                // Communicate with neighbors in order to correctly count
+                // alive pixels on border cols.
                 sendLeft();
                 sendRight();
                 receiveRight();
                 receiveLeft();
 
+                // For each pixel on my strip...
                 for (int y = 0; y < HEIGHT; y++) {
                     for (int x = 1; x <= stripSize; x++) {
                         tmpPixels[x][y] = pixels[x][y];
@@ -106,8 +146,22 @@ public class Ex1 {
                     }
                 }
 
-                if (Arrays.deepEquals(pixels, tmpPixels)) {
-                    changes = false;
+                changes = false;
+
+                // If anything on my local strip changed compared to the
+                // previous iteration, do the whole thing again.
+                for (int x = 1; x <= stripSize; x++) {
+                    if (!Arrays.equals(pixels[x], tmpPixels[x])) {
+                        changes = true;
+                        break;
+                    }
+                }
+
+                try {
+                    result.put(changes);
+                    changes = answer.take();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
 
                 pixels = tmpPixels;
@@ -127,6 +181,7 @@ public class Ex1 {
         }
 
         private void receiveLeft() {
+            // Do nothing if we don't have a left neighbor.
             if (receiveLeft == null) {
                 return;
             }
@@ -139,6 +194,7 @@ public class Ex1 {
         }
 
         private void receiveRight() {
+            // Do nothing if we don't have a right neighbor.
             if (receiveRight == null) {
                 return;
             }
@@ -150,6 +206,7 @@ public class Ex1 {
             }
         }
 
+        // Send a copy of rightmost col to right neighbor.
         private void sendRight() {
             if (sendRight == null) {
                 return;
@@ -164,6 +221,7 @@ public class Ex1 {
             }
         }
 
+        // Send a copy of leftmost col to left neighbor.
         private void sendLeft() {
             if (sendLeft == null) {
                 return;
@@ -249,6 +307,10 @@ public class Ex1 {
         Worker[] workers = new Worker[NUM_THREADS];
         int stripSize = (int) Math.ceil(WIDTH / NUM_THREADS);
 
+        // For communicating with coordinator, as described in heartbeat.pdf
+        ArrayBlockingQueue<Boolean>[] results = new ArrayBlockingQueue[NUM_THREADS];
+        ArrayBlockingQueue<Boolean>[] answers = new ArrayBlockingQueue[NUM_THREADS];
+
         // First workers left hand queues will be null, since there's noone to
         // communicate with.
         ArrayBlockingQueue<int[]> sendLeft = null;
@@ -260,6 +322,8 @@ public class Ex1 {
 
             ArrayBlockingQueue<int[]> sendRight = new ArrayBlockingQueue<>(1);
             ArrayBlockingQueue<int[]> receiveRight = new ArrayBlockingQueue<>(1);
+            results[i] = new ArrayBlockingQueue<>(1);
+            answers[i] = new ArrayBlockingQueue<>(1);
 
             // No need to communicate with further right if we're working with
             // rightmost strip.
@@ -269,7 +333,9 @@ public class Ex1 {
                 receiveRight = null;
             }
 
-            Worker w = new Worker(i, start, end, sendLeft, sendRight, receiveLeft, receiveRight);
+            Worker w = new Worker(i, start, end, sendLeft, sendRight,
+                    receiveLeft, receiveRight, results[i], answers[i]);
+
             workers[i] = w;
 
             // Next worker's left hand queues should be this worker's right hand queues.
@@ -277,16 +343,21 @@ public class Ex1 {
             receiveLeft = sendRight;
         }
 
+        Coordinator coordinator = new Coordinator(results, answers);
+        coordinator.start();
+
         for (int i = 0; i < NUM_THREADS; i++) {
             workers[i].start();
         }
 
-        for (int i = 0; i < NUM_THREADS; i++) {
-            try {
+        try {
+            for (int i = 0; i < NUM_THREADS; i++) {
                 workers[i].join();
-            } catch (InterruptedException e) {
-                e.printStackTrace();
+
             }
+            coordinator.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
 
         long runTime = System.nanoTime() - startTime;
@@ -337,6 +408,7 @@ public class Ex1 {
     private static int numAliveNeighbors(int x, int y, int[][] pixels) {
         ArrayList<Integer> neighbors = new ArrayList<>();
 
+        // In hindsight, this would definitely be prettier as a loop...
         if (x == 0 && y == 0) {
             // Top-left corner
             neighbors.add(pixels[x + 1][y]);
