@@ -52,6 +52,9 @@ Notes on Testing
 For testing I initially started out with implementing a sequential version of
 the effect to use as a reference.
 
+The images were generated with GIMP, as you recommended. I parsed the files
+manually. It requires them to be in the one-column format.
+
 For the examples in this directory it doesn't pay off to use multiple threads.
 I deliberately timed the effects end-to-end, and the concurrent versions tend
 to be slower, most likely because of the synchronization overhead.

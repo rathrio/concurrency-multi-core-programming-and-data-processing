@@ -308,8 +308,8 @@ public class Ex1 {
         int stripSize = (int) Math.ceil(WIDTH / NUM_THREADS);
 
         // For communicating with coordinator, as described in heartbeat.pdf
-        ArrayBlockingQueue<Boolean>[] results = new ArrayBlockingQueue[NUM_THREADS];
-        ArrayBlockingQueue<Boolean>[] answers = new ArrayBlockingQueue[NUM_THREADS];
+        ArrayBlockingQueue[] results = new ArrayBlockingQueue[NUM_THREADS];
+        ArrayBlockingQueue[] answers = new ArrayBlockingQueue[NUM_THREADS];
 
         // First workers left hand queues will be null, since there's noone to
         // communicate with.
